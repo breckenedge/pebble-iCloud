@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-iCloud Service for Pebble Watch Integration
-Handles authentication and API communication with iCloud services
+iCloud Reminders Service for Pebble Watch Integration
+Handles authentication and API communication with iCloud Reminders
+Focus: Reminders only (TDD approach)
 """
 
 from pyicloud import PyiCloudService
@@ -51,21 +52,6 @@ def get_icloud_service():
 def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
-
-
-@app.route('/api/auth/status', methods=['GET'])
-def auth_status():
-    """Check authentication status"""
-    try:
-        service = get_icloud_service()
-        return jsonify({
-            "authenticated": True,
-            "requires_2fa": service.requires_2fa,
-            "user": service.data.get('dsInfo', {}).get('fullName', 'Unknown')
-        })
-    except Exception as e:
-        logger.error(f"Authentication error: {str(e)}")
-        return jsonify({"authenticated": False, "error": str(e)}), 401
 
 
 @app.route('/api/reminders/lists', methods=['GET'])
@@ -192,31 +178,6 @@ def complete_reminder(reminder_id):
         return jsonify({"error": "Reminder not found"}), 404
     except Exception as e:
         logger.error(f"Error completing reminder: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/findmy/devices', methods=['GET'])
-def get_devices():
-    """Get Find My devices (if available)"""
-    try:
-        service = get_icloud_service()
-
-        devices = []
-        for device in service.devices:
-            devices.append({
-                "id": device.content.get('id'),
-                "name": device.content.get('name'),
-                "model": device.content.get('deviceDisplayName'),
-                "battery_level": device.content.get('batteryLevel'),
-                "location": {
-                    "latitude": device.location().get('latitude') if device.location() else None,
-                    "longitude": device.location().get('longitude') if device.location() else None,
-                }
-            })
-
-        return jsonify({"devices": devices})
-    except Exception as e:
-        logger.error(f"Error fetching devices: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
