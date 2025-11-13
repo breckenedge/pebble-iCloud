@@ -205,6 +205,7 @@ class TestMultiUserIsolation(unittest.TestCase):
             mock_collection = Mock()
             mock_collection.guid = 'list-123'
             mock_collection.title = f'User {user_id} List'
+            mock_collection.color = 'blue'  # Set color to avoid Mock serialization issues
 
             mock_service = Mock()
             mock_service.reminders.collections = [mock_collection]

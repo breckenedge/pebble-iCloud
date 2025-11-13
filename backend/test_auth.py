@@ -199,6 +199,16 @@ class TestPasswordEncryption(unittest.TestCase):
 class TestJWTTokens(unittest.TestCase):
     """Test cases for JWT token generation and verification"""
 
+    def setUp(self):
+        self.app = app
+        self.app.config['TESTING'] = True
+        self.app.config['SECRET_KEY'] = 'test_secret_key'
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
+    def tearDown(self):
+        self.app_context.pop()
+
     def test_generate_and_verify_token(self):
         """Should generate and verify JWT token"""
         # Arrange
@@ -227,7 +237,7 @@ class TestJWTTokens(unittest.TestCase):
         # Create token that expires immediately
         expired_token = jwt.encode(
             {'user_id': user_id, 'exp': datetime.utcnow() - timedelta(seconds=1)},
-            'test_secret',
+            'test_secret_key',
             algorithm='HS256'
         )
 

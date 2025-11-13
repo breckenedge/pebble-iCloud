@@ -9,7 +9,7 @@ import os
 import jwt
 from datetime import datetime, timedelta
 from cryptography.fernet import Fernet
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request, g, current_app
 from functools import wraps
 import logging
 
@@ -37,8 +37,10 @@ fernet = Fernet(ENCRYPTION_KEY)
 def get_db():
     """Get database connection"""
     if 'db' not in g:
+        # Use current_app to get the app in the current context
+        database_path = current_app.config['DATABASE']
         g.db = sqlite3.connect(
-            app.config['DATABASE'],
+            database_path,
             detect_types=sqlite3.PARSE_DECLTYPES
         )
         g.db.row_factory = sqlite3.Row
@@ -84,14 +86,14 @@ def generate_token(user_id):
         'user_id': user_id,
         'exp': datetime.utcnow() + timedelta(days=30)
     }
-    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
     return token
 
 
 def verify_token(token):
     """Verify JWT token and return user_id"""
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
         return payload['user_id']
     except jwt.ExpiredSignatureError:
         logger.warning("Token expired")
