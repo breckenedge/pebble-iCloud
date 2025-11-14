@@ -47,3 +47,28 @@ jobs:
           flags: backend
           fail_ci_if_error: false
         continue-on-error: true
+
+  pebble-app-lint:
+    name: Pebble App JavaScript Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: pebble-app/package.json
+
+      - name: Install dependencies
+        run: |
+          cd pebble-app
+          npm install
+
+      - name: Run ESLint
+        run: |
+          cd pebble-app
+          npm run lint

@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": true,
+    "es6": false
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 5,
+    "sourceType": "script"
+  },
+  "globals": {
+    "Pebble": "readonly",
+    "XMLHttpRequest": "readonly",
+    "localStorage": "readonly",
+    "console": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
+    "no-console": "off",
+    "semi": ["error", "always"],
+    "quotes": ["error", "single", { "avoidEscape": true }]
+  }
+}

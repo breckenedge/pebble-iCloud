@@ -4,7 +4,13 @@
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
+  "scripts": {
+    "lint": "eslint src/pkjs/"
+  },
   "dependencies": {},
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
   "pebble": {
     "sdkVersion": "3",
     "enableMultiJS": true,
