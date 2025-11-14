@@ -1,11 +1,11 @@
 {
   "env": {
     "browser": true,
-    "es6": false
+    "es6": true
   },
   "extends": "eslint:recommended",
   "parserOptions": {
-    "ecmaVersion": 5,
+    "ecmaVersion": 6,
     "sourceType": "script"
   },
   "globals": {
@@ -15,8 +15,10 @@
     "console": "readonly"
   },
   "rules": {
-    "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
+    "no-unused-vars": ["error", { "vars": "all", "args": "none", "varsIgnorePattern": "^KEY_" }],
     "no-console": "off",
+    "no-prototype-builtins": "off",
+    "no-redeclare": "error",
     "semi": ["error", "always"],
     "quotes": ["error", "single", { "avoidEscape": true }]
   }

@@ -290,29 +290,31 @@ Pebble.addEventListener('appmessage', function(e) {
   var cmd = e.payload.KEY_CMD;
   console.log('Command: ' + cmd);
 
+  var username, appleId, applePassword, token, listId, reminderId;
+
   switch (cmd) {
     case CMD_LOGIN:
-      var username = e.payload.KEY_USERNAME;
-      var appleId = e.payload.KEY_APPLE_ID;
-      var applePassword = e.payload.KEY_APPLE_PASSWORD;
+      username = e.payload.KEY_USERNAME;
+      appleId = e.payload.KEY_APPLE_ID;
+      applePassword = e.payload.KEY_APPLE_PASSWORD;
       handleLogin(username, appleId, applePassword);
       break;
 
     case CMD_GET_LISTS:
-      var token = e.payload.KEY_TOKEN;
+      token = e.payload.KEY_TOKEN;
       handleGetLists(token);
       break;
 
     case CMD_GET_REMINDERS:
-      var token = e.payload.KEY_TOKEN;
-      var listId = e.payload.KEY_LIST_ID;
+      token = e.payload.KEY_TOKEN;
+      listId = e.payload.KEY_LIST_ID;
       handleGetReminders(token, listId);
       break;
 
     case CMD_COMPLETE_REMINDER:
-      var token = e.payload.KEY_TOKEN;
-      var listId = e.payload.KEY_LIST_ID;
-      var reminderId = e.payload.KEY_REMINDER_ID;
+      token = e.payload.KEY_TOKEN;
+      listId = e.payload.KEY_LIST_ID;
+      reminderId = e.payload.KEY_REMINDER_ID;
       handleCompleteReminder(token, listId, reminderId);
       break;
 
