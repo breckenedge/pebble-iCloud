@@ -72,3 +72,29 @@ jobs:
         run: |
           cd pebble-app
           npm run lint
+
+  pebble-app-build:
+    name: Pebble App C Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pull Pebble SDK Docker image
+        run: docker pull rebble/pebble-sdk
+
+      - name: Build Pebble app
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/pebble-app:/pebble \
+            -w /pebble \
+            rebble/pebble-sdk \
+            pebble build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pebble-app-build
+          path: pebble-app/build/*.pbw
+          if-no-files-found: error
