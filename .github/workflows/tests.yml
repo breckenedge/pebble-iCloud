@@ -75,22 +75,47 @@ jobs:
 
   pebble-app-build:
     name: Pebble App C Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    container:
+      image: python:2.7.18-buster
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      - name: Pull Pebble SDK Docker image
-        run: docker pull rebble/pebble-sdk
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+
+      - name: Install dependencies
+        run: apt-get update && apt-get -qq install -y wget python-pip python2.7-dev libsdl1.2debian libfdt1 libpixman-1-0 nodejs npm libfreetype6 libx11-6 rlwrap
+
+      - name: Install virtualenv
+        run: pip install virtualenv
+
+      - name: Download Pebble SDK
+        run: |
+          mkdir sdk
+          wget -q -O - https://developer.rebble.io/s3.amazonaws.com/assets.getpebble.com/pebble-tool/pebble-sdk-4.5-linux64.tar.bz2 | tar xj --strip-components=1 -C sdk
+
+      - name: Setup SDK virtual environment
+        run: |
+          cd sdk
+          virtualenv .env
+          bash -c "source .env/bin/activate && pip install -r requirements.txt && deactivate"
+
+      - name: Download SDK Core
+        run: wget https://github.com/aveao/PebbleArchive/raw/master/SDKCores/sdk-core-4.3.tar.bz2 -O sdk/sdk-core-4.3.tar.bz2
+
+      - name: Install SDK Core
+        run: |
+          mkdir -p ~/.pebble-sdk
+          touch ~/.pebble-sdk/NO_TRACKING
+          sdk/bin/pebble sdk install sdk/sdk-core-4.3.tar.bz2
 
       - name: Build Pebble app
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/pebble-app:/pebble \
-            -w /pebble \
-            rebble/pebble-sdk \
-            pebble build
+          cd pebble-app
+          yes | ../sdk/bin/pebble build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
