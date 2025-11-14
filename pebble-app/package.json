@@ -12,7 +12,7 @@
     "eslint": "^8.56.0"
   },
   "pebble": {
-    "sdkVersion": "4.5",
+    "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
       "aplite",
