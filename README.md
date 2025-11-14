@@ -29,13 +29,13 @@ A multi-user service that enables Pebble smartwatches to access iCloud Reminders
 
 ### Components
 
-1. **Pebble Watch App** (`pebble-app/src/c/main.c`) ✅ NEW!
+1. **Pebble Watch App** (`pebble-app/src/c/main.c`) ✅
    - C-based native Pebble application
    - View reminder lists and reminders
    - Mark reminders as complete
    - Secure credential storage on watch
 
-2. **PebbleKit JS** (`pebble-app/src/pkjs/index.js`) ✅ NEW!
+2. **PebbleKit JS** (`pebble-app/src/pkjs/index.js`) ✅
    - Runs on companion phone
    - HTTP communication with Flask backend
    - Web-based configuration interface
@@ -123,6 +123,7 @@ pebble install --phone <PHONE_IP>
    - Apple ID: your.email@icloud.com
    - App-Specific Password: (generate at appleid.apple.com)
 4. Save and launch the app on your watch!
+
 
 ### Configuration
 
