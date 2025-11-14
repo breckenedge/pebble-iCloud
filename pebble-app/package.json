@@ -1,0 +1,43 @@
+{
+  "name": "pebble-icloud-reminders",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite"
+    ],
+    "uuid": "a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6",
+    "displayName": "iCloud Reminders",
+    "watchapp": {
+      "watchface": false
+    },
+    "messageKeys": [
+      "CMD",
+      "ACTION",
+      "USERNAME",
+      "APPLE_ID",
+      "APPLE_PASSWORD",
+      "TOKEN",
+      "LIST_ID",
+      "LIST_TITLE",
+      "REMINDER_ID",
+      "REMINDER_TITLE",
+      "REMINDER_COMPLETED",
+      "REMINDER_INDEX",
+      "STATUS",
+      "ERROR",
+      "COUNT"
+    ],
+    "resources": {
+      "media": []
+    }
+  }
+}
