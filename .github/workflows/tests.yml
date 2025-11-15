@@ -87,7 +87,7 @@ jobs:
         uses: actions/setup-node@v2
 
       - name: Install dependencies
-        run: apt-get update && apt-get -qq install -y wget libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6 python3.9-venv
+        run: apt-get update && apt-get -qq install -y wget libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
 
       - name: Download Pebble SDK
         run: |
@@ -95,16 +95,10 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Create virtualenv for SDK
+      - name: Install SDK dependencies
         run: |
-          cd ~/pebble-dev
-          python3.9 -m venv .env
-
-      - name: Install SDK dependencies in virtualenv
-        run: |
-          cd ~/pebble-dev
-          .env/bin/pip install --upgrade pip
-          .env/bin/pip install sh requests websocket-client coloredlogs
+          pip install --upgrade pip
+          pip install sh requests websocket-client coloredlogs
 
       - name: Setup SDK
         run: |
