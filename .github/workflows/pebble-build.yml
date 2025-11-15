@@ -26,68 +26,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 2.7
+      - name: Build Pebble app using Docker
         run: |
-          # Ubuntu 22.04+ doesn't have python2.7 in default repos
-          # Use deadsnakes PPA for Python 2.7
-          sudo add-apt-repository -y ppa:deadsnakes/ppa
-          sudo apt-get update
-          sudo apt-get install -y python2.7 python2.7-dev
-
-          # Create symlink for python
-          sudo ln -sf /usr/bin/python2.7 /usr/bin/python
-
-          # Install pip for Python 2.7
-          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-          sudo python2.7 get-pip.py
-
-          # Verify installation
-          python --version
-          pip --version
-
-      - name: Install Pebble SDK dependencies
-        run: |
-          sudo apt-get install -y \
-            libffi-dev \
-            libssl-dev \
-            libglib2.0-dev \
-            libsdl1.2-dev \
-            libfdt1 \
-            libpixman-1-0 \
-            gcc \
-            make
-
-      - name: Install Pebble SDK
-        run: |
-          # Download and extract Pebble SDK
-          mkdir -p ~/pebble-dev
-          cd ~/pebble-dev
-
-          # Use wget to download SDK
-          wget https://developer.rebble.io/s3.amazonaws.com/assets.getpebble.com/pebble-tool/pebble-sdk-4.5-linux64.tar.bz2
-          tar -jxf pebble-sdk-4.5-linux64.tar.bz2
-
-          # Install pebble-tool requirements
-          cd pebble-sdk-4.5-linux64
-          pip install --user -r requirements.txt
-
-          # Add to PATH
-          echo "$HOME/pebble-dev/pebble-sdk-4.5-linux64/bin" >> $GITHUB_PATH
-
-      - name: Verify Pebble SDK installation
-        run: |
-          pebble --version
-          pebble sdk list
-
-      - name: Build Pebble app
-        run: |
-          cd pebble-app
-
-          # Clean any previous builds
-          pebble clean || true
-
-          # Build the app for all target platforms
-          pebble build
+          # Use the official Pebble SDK Docker image
+          # This avoids all Python 2.7 installation issues
+          docker run --rm \
+            -v "$(pwd)/pebble-app:/pebble" \
+            bboehmke/pebble-dev \
+            sh -c "cd /pebble && pebble clean && pebble build"
 
       - name: List build output
         run: |
