@@ -79,10 +79,10 @@ static void show_reminders_window(void);
 static void show_detail_window(int reminder_index);
 
 // Persist keys for settings
+// NOTE: For security, we only persist TOKEN and USERNAME
+// Apple ID and password are NOT stored on the watch
 #define PERSIST_KEY_TOKEN 1
 #define PERSIST_KEY_USERNAME 2
-#define PERSIST_KEY_APPLE_ID 3
-#define PERSIST_KEY_APPLE_PASSWORD 4
 
 // Load settings from persistent storage
 static void load_settings(void) {
@@ -92,22 +92,26 @@ static void load_settings(void) {
   if (persist_exists(PERSIST_KEY_USERNAME)) {
     persist_read_string(PERSIST_KEY_USERNAME, s_username, sizeof(s_username));
   }
-  if (persist_exists(PERSIST_KEY_APPLE_ID)) {
-    persist_read_string(PERSIST_KEY_APPLE_ID, s_apple_id, sizeof(s_apple_id));
+
+  // Clear any legacy stored credentials for security
+  if (persist_exists(3)) { // Old PERSIST_KEY_APPLE_ID
+    persist_delete(3);
   }
-  if (persist_exists(PERSIST_KEY_APPLE_PASSWORD)) {
-    persist_read_string(PERSIST_KEY_APPLE_PASSWORD, s_apple_password, sizeof(s_apple_password));
+  if (persist_exists(4)) { // Old PERSIST_KEY_APPLE_PASSWORD
+    persist_delete(4);
   }
 
   s_is_logged_in = (strlen(s_token) > 0);
 }
 
 // Save settings to persistent storage
+// Only saves token and username for security
 static void save_settings(void) {
   persist_write_string(PERSIST_KEY_TOKEN, s_token);
   persist_write_string(PERSIST_KEY_USERNAME, s_username);
-  persist_write_string(PERSIST_KEY_APPLE_ID, s_apple_id);
-  persist_write_string(PERSIST_KEY_APPLE_PASSWORD, s_apple_password);
+
+  // Note: Apple ID and password are NOT persisted
+  // They are only held in memory during the login flow
 }
 
 // AppMessage callbacks
