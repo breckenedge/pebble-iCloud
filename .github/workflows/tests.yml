@@ -77,7 +77,7 @@ jobs:
     name: Pebble App C Build
     runs-on: ubuntu-latest
     container:
-      image: python:2.7.18-buster
+      image: python:3.9
 
     steps:
       - name: Checkout code
@@ -86,16 +86,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
 
-      - name: Fix Debian Buster repositories
-        run: |
-          sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
-          sed -i '/security.debian.org/d' /etc/apt/sources.list
-          sed -i '/stretch-updates/d' /etc/apt/sources.list
-          sed -i '/buster-updates/d' /etc/apt/sources.list
-          echo "deb http://archive.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list
-
       - name: Install dependencies
-        run: apt-get update && apt-get -qq install -y wget python-pip python2.7-dev libsdl1.2debian libfdt1 libpixman-1-0 nodejs npm libfreetype6 libx11-6 rlwrap
+        run: apt-get update && apt-get -qq install -y wget libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
 
       - name: Install Pebble tool
         run: pip install pebble-tool
