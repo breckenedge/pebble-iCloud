@@ -97,8 +97,11 @@ jobs:
 
       - name: Install SDK dependencies
         run: |
+          pip install --upgrade pip setuptools wheel
           cd ~/pebble-dev
-          pip install -r requirements.txt
+          # Install dependencies, skipping pypkjs which has compatibility issues
+          grep -v pypkjs requirements.txt > requirements-filtered.txt || true
+          pip install -r requirements-filtered.txt || pip install sh requests websocket-client coloredlogs
 
       - name: Setup SDK
         run: |
