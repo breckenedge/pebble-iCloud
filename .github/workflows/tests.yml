@@ -101,7 +101,7 @@ jobs:
       - name: Setup SDK virtualenv
         run: |
           cd ~/pebble-dev
-          virtualenv --no-site-packages .env
+          virtualenv .env
           . .env/bin/activate
           pip install --upgrade pip setuptools wheel
           # Install dependencies, skipping pypkjs which has compatibility issues
