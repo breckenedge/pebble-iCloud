@@ -95,16 +95,17 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Setup SDK virtualenv
+      - name: Install SDK dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          # Install core dependencies needed for pebble build
+          pip install sh requests websocket-client coloredlogs
+
+      - name: Create SDK virtualenv symlink
         run: |
           cd ~/pebble-dev
-          python -m venv .env
-          . .env/bin/activate
-          pip install --upgrade pip setuptools wheel
-          # Install dependencies, skipping pypkjs which has compatibility issues
-          grep -v pypkjs requirements.txt > requirements-filtered.txt || true
-          pip install -r requirements-filtered.txt || pip install sh requests websocket-client coloredlogs
-          deactivate
+          # Create .env as a symlink to system Python to satisfy SDK check
+          ln -s /usr/local .env
 
       - name: Setup SDK
         run: |
