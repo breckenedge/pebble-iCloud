@@ -97,35 +97,22 @@ jobs:
       - name: Install dependencies
         run: apt-get update && apt-get -qq install -y wget python-pip python2.7-dev libsdl1.2debian libfdt1 libpixman-1-0 nodejs npm libfreetype6 libx11-6 rlwrap
 
-      - name: Install virtualenv
-        run: pip install virtualenv
-
-      - name: Download Pebble SDK
-        run: |
-          mkdir sdk
-          wget -O pebble-sdk.tar.bz2 https://developer.rebble.io/s3.amazonaws.com/assets.getpebble.com/pebble-tool/pebble-sdk-4.5-linux64.tar.bz2
-          tar xjf pebble-sdk.tar.bz2 --strip-components=1 -C sdk
-          rm pebble-sdk.tar.bz2
-
-      - name: Setup SDK virtual environment
-        run: |
-          cd sdk
-          virtualenv .env
-          bash -c "source .env/bin/activate && pip install -r requirements.txt && deactivate"
+      - name: Install Pebble tool
+        run: pip install pebble-tool
 
       - name: Download SDK Core
-        run: wget https://github.com/aveao/PebbleArchive/raw/master/SDKCores/sdk-core-4.3.tar.bz2 -O sdk/sdk-core-4.3.tar.bz2
-
-      - name: Install SDK Core
         run: |
           mkdir -p ~/.pebble-sdk
           touch ~/.pebble-sdk/NO_TRACKING
-          sdk/bin/pebble sdk install sdk/sdk-core-4.3.tar.bz2
+          wget https://github.com/aveao/PebbleArchive/raw/master/SDKCores/sdk-core-4.3.tar.bz2 -O ~/.pebble-sdk/sdk-core-4.3.tar.bz2
+
+      - name: Install SDK
+        run: yes | pebble sdk install ~/.pebble-sdk/sdk-core-4.3.tar.bz2
 
       - name: Build Pebble app
         run: |
           cd pebble-app
-          yes | ../sdk/bin/pebble build
+          yes | pebble build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
