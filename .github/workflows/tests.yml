@@ -95,13 +95,10 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Install virtualenv
-        run: pip install virtualenv
-
       - name: Setup SDK virtualenv
         run: |
           cd ~/pebble-dev
-          virtualenv .env
+          python -m venv .env
           . .env/bin/activate
           pip install --upgrade pip setuptools wheel
           # Install dependencies, skipping pypkjs which has compatibility issues
