@@ -20,7 +20,7 @@ on:
 jobs:
   build-pebble-app:
     name: Build Pebble Rocky.js App
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -28,27 +28,34 @@ jobs:
 
       - name: Set up Python 2.7
         run: |
+          # Ubuntu 22.04+ doesn't have python2.7 in default repos
+          # Use deadsnakes PPA for Python 2.7
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
           sudo apt-get update
-          sudo apt-get install -y python2.7 python2.7-dev python-pip-whl
+          sudo apt-get install -y python2.7 python2.7-dev
+
+          # Create symlink for python
           sudo ln -sf /usr/bin/python2.7 /usr/bin/python
 
           # Install pip for Python 2.7
           curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
           sudo python2.7 get-pip.py
 
+          # Verify installation
           python --version
           pip --version
 
       - name: Install Pebble SDK dependencies
         run: |
           sudo apt-get install -y \
-            python-setuptools \
             libffi-dev \
             libssl-dev \
             libglib2.0-dev \
-            libsdl1.2debian \
+            libsdl1.2-dev \
             libfdt1 \
-            libpixman-1-0
+            libpixman-1-0 \
+            gcc \
+            make
 
       - name: Install Pebble SDK
         run: |
