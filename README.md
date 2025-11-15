@@ -1,30 +1,54 @@
 # Pebble iCloud Reminders Integration
 
-A multi-user service that enables Pebble smartwatches to access iCloud Reminders. Built using Test-Driven Development (TDD) with comprehensive test coverage.
+A production-ready multi-tenant service that enables Pebble smartwatches to access iCloud Reminders. Built using Test-Driven Development (TDD) with comprehensive test coverage.
+
+## ✨ Version 2.0 - Multi-Tenant Cloud Service
+
+**New in v2.0:**
+- ☁️ **Centralized deployment** - One server for all users
+- 🔒 **Enhanced security** - No passwords stored on watch
+- 🚀 **Production-ready** - Rate limiting, HTTPS, PostgreSQL support
+- 📦 **Easy deployment** - Railway, Fly.io, Render, Heroku
+- 🎯 **Fixed backend URL** - No manual configuration needed
 
 ## Features
 
-- 🔐 **Multi-user support** with encrypted credential storage
-- 🔑 **JWT-based authentication**
+- 🔐 **Multi-tenant architecture** with user isolation
+- 🔑 **JWT-based authentication** (30-day tokens)
 - ✅ **iCloud Reminders integration** (list, create, complete reminders)
+- 🛡️ **Production security** (rate limiting, input validation, encrypted storage)
 - 🧪 **31 passing tests** (100% coverage of core functionality)
-- 🗄️ **SQLite database** for encrypted user credentials
-- 🔒 **Fernet encryption** for Apple passwords
+- 🗄️ **Database support** (SQLite for dev, PostgreSQL for production)
+- 🔒 **Fernet encryption** for Apple app-specific passwords
+- 🌐 **Auto-scaling** ready for cloud platforms
 
 ## Architecture
 
+### Multi-Tenant Cloud Deployment (v2.0)
+
 ```
-┌─────────────────┐         ┌─────────────────┐         ┌──────────────────┐         ┌──────────────┐
-│  Pebble Watch   │◄───────►│     Phone       │◄───────►│  Python Backend  │◄───────►│    iCloud    │
-│   App (C)       │ AppMsg  │  (PebbleKit JS) │HTTP/JSON│  (Flask + Auth)  │pyicloud │  Reminders   │
-└─────────────────┘         └─────────────────┘         └──────────────────┘         └──────────────┘
-                                                                  │
-                                                                  ▼
-                                                         ┌─────────────────┐
-                                                         │ SQLite Database │
-                                                         │  (Encrypted     │
-                                                         │   Credentials)  │
-                                                         └─────────────────┘
+┌──────────────────┐         ┌──────────────────┐         ┌────────────────────────────┐
+│  Pebble Watch    │◄───────►│  Phone           │◄───────►│  Cloud Platform            │
+│  (stores token)  │ AppMsg  │  (PebbleKit JS)  │  HTTPS  │  (Railway/Fly.io/Render)   │
+└──────────────────┘         └──────────────────┘         │                            │
+                                                           │  ┌──────────────────────┐  │
+      Multiple Users                                       │  │  Flask Backend       │  │
+           ↓ ↓ ↓                                           │  │  - Rate limiting     │  │
+                                                           │  │  - Input validation  │  │
+                                                           │  │  - Multi-user auth   │  │
+                                                           │  └──────────┬───────────┘  │
+                                                           │             ↓              │
+                                                           │  ┌──────────────────────┐  │
+                                                           │  │  PostgreSQL          │  │
+                                                           │  │  - Encrypted creds   │  │
+                                                           │  │  - User isolation    │  │
+                                                           │  └──────────────────────┘  │
+                                                           └────────────┬───────────────┘
+                                                                        ↓
+                                                                ┌───────────────┐
+                                                                │ iCloud API    │
+                                                                │ (pyicloud)    │
+                                                                └───────────────┘
 ```
 
 ### Components
@@ -61,68 +85,95 @@ A multi-user service that enables Pebble smartwatches to access iCloud Reminders
 
 ## Getting Started
 
-### Prerequisites
+### For Users (Quick Start)
 
-**For Backend:**
-- Python 3.8+
-- Apple ID with app-specific password
-- iCloud account with Reminders enabled
-
-**For Pebble App:**
-- Pebble watch (Aplite, Basalt, Chalk, or Diorite)
-- Pebble SDK 3.x or CloudPebble account
+**Prerequisites:**
+- Pebble smartwatch (Aplite, Basalt, Chalk, or Diorite)
 - Pebble mobile app (iOS or Android)
+- iCloud account with Reminders enabled
+- App-specific password from [appleid.apple.com](https://appleid.apple.com)
 
-### Quick Start
+**Installation Steps:**
 
-#### 1. Install and Run Backend
+1. **Install the Pebble App**
+   - Download from Pebble Appstore (if published)
+   - Or sideload using CloudPebble/local build
 
+2. **Configure Your Account**
+   - Open Pebble app → Settings → iCloud Reminders
+   - Enter:
+     - **Username**: Choose a unique username
+     - **Apple ID**: your.email@icloud.com
+     - **App-Specific Password**: (from appleid.apple.com)
+   - Save settings
+
+3. **Start Using**
+   - App will auto-login and sync with iCloud
+   - View reminder lists and items
+   - Mark reminders complete from your wrist!
+
+**No backend setup needed** - the service is hosted for you!
+
+---
+
+### For Developers (Deployment)
+
+Want to deploy your own instance?
+
+**Quick Deploy to Railway:**
+
+1. **Generate secrets**:
+   ```bash
+   cd backend
+   python3 generate_secrets.py
+   ```
+
+2. **Deploy to Railway**:
+   - Go to [railway.app](https://railway.app)
+   - "New Project" → "Deploy from GitHub"
+   - Select this repo
+   - Add PostgreSQL database
+   - Set environment variables (from step 1)
+
+3. **Update Pebble app**:
+   ```bash
+   # Edit pebble-app/src/pkjs/index.js
+   var BACKEND_URL = 'https://your-app.up.railway.app';
+   ```
+
+4. **Build and deploy**:
+   ```bash
+   cd pebble-app
+   pebble build
+   pebble install --phone <PHONE_IP>
+   ```
+
+**Full deployment guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+---
+
+### Local Development
+
+**1. Set up backend**:
 ```bash
 cd backend
 pip install -r requirements.txt
-```
-
-Set up your computer's network IP (not localhost) for phone access:
-
-```bash
-# Find your IP address
-# macOS/Linux: ifconfig | grep "inet "
-# Windows: ipconfig
-```
-
-Start the backend:
-
-```bash
+cp .env.development .env
 python app.py
-# Backend runs on http://0.0.0.0:5000
 ```
 
-#### 2. Install Pebble App
-
-See detailed instructions in `pebble-app/README.md`
-
-**Quick Method (CloudPebble):**
-1. Go to [CloudPebble](https://cloudpebble.net/)
-2. Import the project from `pebble-app/`
-3. Build and install to your watch
-
-**Local Method:**
+**2. Build Pebble app**:
 ```bash
 cd pebble-app
+# Edit src/pkjs/index.js: uncomment localhost URL
 pebble build
-pebble install --phone <PHONE_IP>
+pebble install --emulator
 ```
 
-#### 3. Configure the App
-
-1. Open Pebble mobile app
-2. Go to Settings → iCloud Reminders
-3. Enter:
-   - Backend URL: `http://YOUR_COMPUTER_IP:5000`
-   - Username: Choose a username
-   - Apple ID: your.email@icloud.com
-   - App-Specific Password: (generate at appleid.apple.com)
-4. Save and launch the app on your watch!
+**3. Configure and test**:
+- Open settings in Pebble app
+- Enter credentials
+- Test with local backend
 
 
 ### Configuration
@@ -328,70 +379,118 @@ This project was built using TDD:
   - Error handling
 ```
 
-## Security Considerations
+## Security Features
 
-⚠️ **Important Limitations:**
+### Production Security (v2.0)
 
-1. **Unofficial API** - Uses `pyicloud` which reverse-engineers Apple's internal APIs
-2. **2FA Challenges** - Two-factor authentication requires manual intervention
-3. **Credential Storage** - While encrypted, credentials are stored on your server
-4. **App-Specific Passwords** - Required from iCloud settings
+**Authentication & Authorization:**
+- ✅ JWT tokens with 30-day expiration
+- ✅ Rate limiting (5 login attempts/min, 10 registrations/hour)
+- ✅ Input validation (email format, username constraints)
+- ✅ Password strength requirements (8+ characters)
 
-### Security Best Practices
+**Data Protection:**
+- ✅ Fernet symmetric encryption for Apple app-specific passwords
+- ✅ Environment-based secret management
+- ✅ No passwords stored on watch (token-only)
+- ✅ Parameterized SQL queries (SQL injection protection)
+- ✅ HTTPS enforced in production
 
-- ✅ Passwords encrypted with Fernet (symmetric encryption)
-- ✅ JWT tokens for stateless authentication
-- ✅ Environment variables for sensitive configuration
-- ✅ SQLite with parameterized queries (SQL injection protection)
-- ⚠️ Change `JWT_SECRET_KEY` in production
-- ⚠️ Use HTTPS in production
-- ⚠️ Implement rate limiting for production use
+**Infrastructure:**
+- ✅ Multi-user isolation (per-user database rows)
+- ✅ PostgreSQL in production (vs SQLite in dev)
+- ✅ Automatic SSL/TLS (via Railway/Fly.io/Render)
+- ✅ Health monitoring endpoints
+
+### Security Considerations
+
+⚠️ **Important to know:**
+
+1. **Unofficial API** - Uses `pyicloud` which reverse-engineers Apple's internal APIs (may break if Apple changes their APIs)
+2. **2FA Support** - Limited 2FA support; use app-specific passwords from [appleid.apple.com](https://appleid.apple.com)
+3. **Credential Storage** - Apple credentials are encrypted and stored server-side (required for pyicloud to work)
+4. **Third-Party Service** - You're trusting the service operator with encrypted credentials
+
+### For Service Operators
+
+**Production Checklist:**
+- [ ] Generate unique `JWT_SECRET_KEY` (use `generate_secrets.py`)
+- [ ] Generate unique `ENCRYPTION_KEY` (use `generate_secrets.py`)
+- [ ] Set `FLASK_ENV=production`
+- [ ] Enable HTTPS (automatic on cloud platforms)
+- [ ] Configure database backups
+- [ ] Set up monitoring/alerting
+- [ ] Never commit `.env` files to git
 
 ## Known Limitations
 
-1. **Apple API Stability** - The pyicloud library may break if Apple changes their APIs
-2. **2FA Support** - Current implementation doesn't fully support 2FA workflows
-3. **Server Required** - You need to host the Python backend yourself
-4. **Network Access** - Phone must be able to reach the backend server
-5. **No Reminder Creation on Watch** - Pebble lacks keyboard/voice input for creating reminders
-6. **No Editing** - Can only mark complete, not edit reminder details on watch
+1. **Apple API Dependency** - Uses unofficial `pyicloud` library (may break with Apple API changes)
+2. **2FA Support** - Limited support; requires app-specific passwords
+3. **Watch Input** - No reminder creation from watch (Pebble lacks keyboard)
+4. **Read-Only Operations** - Can complete but not edit reminder text/dates from watch
+5. **iCloud Sync Delay** - Changes may take a few seconds to sync with Apple servers
+
+## Changelog
+
+### Version 2.0 (Multi-Tenant)
+- [x] ✅ Centralized cloud deployment architecture
+- [x] ✅ Production security hardening (rate limiting, validation)
+- [x] ✅ PostgreSQL support for scalability
+- [x] ✅ Removed password storage from watch
+- [x] ✅ Fixed backend URL (no manual configuration)
+- [x] ✅ Deployment guides for Railway/Fly.io/Render/Heroku
+- [x] ✅ Docker containerization
+
+### Version 1.0 (Self-Hosted)
+- [x] ✅ Pebble watch app implementation
+- [x] ✅ Multi-user backend with JWT auth
+- [x] ✅ Encrypted credential storage
+- [x] ✅ Comprehensive test suite (31 tests)
 
 ## Future Enhancements
 
-- [x] ~~Pebble watch app implementation~~ ✅ COMPLETED!
-- [ ] 2FA flow improvement
-- [ ] WebSocket support for real-time updates
+- [ ] 2FA flow improvement (web-based authentication)
+- [ ] WebSocket support for real-time sync
 - [ ] Caching layer for improved performance
-- [ ] Docker containerization
-- [ ] CI/CD pipeline setup
 - [ ] Push notifications for due reminders
-- [ ] Offline mode with sync
+- [ ] Offline mode with local sync
+- [ ] Reminder creation via voice (if Pebble supports)
+- [ ] Support for reminder notes and attachments
 
 ## Project Structure
 
 ```
 pebble-iCloud/
-├── backend/
-│   ├── app.py                 # Main Flask application
-│   ├── auth_service.py        # Authentication module
-│   ├── icloud_service.py      # Original iCloud service (deprecated)
-│   ├── test_auth.py           # Auth unit tests (11 tests)
+├── backend/                   # Production-ready backend
+│   ├── app.py                 # Flask app (v2.0: production config)
+│   ├── auth_service.py        # Authentication (v2.0: env-based encryption)
+│   ├── db_config.py           # Database abstraction (SQLite/PostgreSQL)
+│   ├── icloud_service.py      # Legacy service (deprecated)
+│   ├── generate_secrets.py    # Secret key generator for deployment
+│   ├── requirements.txt       # Dependencies (v2.0: +gunicorn, psycopg2)
+│   ├── Procfile               # For Railway/Heroku deployment
+│   ├── Dockerfile             # Docker containerization
+│   ├── railway.json           # Railway configuration
+│   ├── .dockerignore          # Docker ignore rules
+│   ├── .env.development       # Dev environment template
+│   ├── .env.production.example # Production env template
+│   ├── test_auth.py           # Auth tests (11 tests)
 │   ├── test_integration.py    # Integration tests (7 tests)
 │   ├── test_reminders.py      # Reminders tests (13 tests)
-│   ├── requirements.txt       # Python dependencies
-│   ├── pytest.ini             # Pytest configuration
-│   ├── Makefile              # Test and build commands
-│   └── .gitignore            # Git ignore rules
-├── pebble-app/               # ✅ Pebble smartwatch app
+│   ├── pytest.ini             # Test configuration
+│   ├── Makefile               # Build commands
+│   └── .gitignore             # Git ignore
+├── pebble-app/                # Pebble smartwatch app
 │   ├── src/
 │   │   ├── c/
-│   │   │   └── main.c        # Main C application
+│   │   │   └── main.c         # Watch app (v2.0: no password storage)
 │   │   └── pkjs/
-│   │       └── index.js      # PebbleKit JavaScript
-│   ├── package.json          # Pebble app manifest
-│   ├── wscript               # Build configuration
-│   └── README.md             # Pebble app documentation
-└── README.md                 # This file
+│   │       └── index.js       # PebbleKit JS (v2.0: fixed backend URL)
+│   ├── package.json           # App manifest
+│   ├── wscript                # Build config
+│   └── README.md              # Pebble app docs
+├── DEPLOYMENT.md              # Full deployment guide
+└── README.md                  # This file
 ```
 
 ## Contributing
