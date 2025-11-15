@@ -9,7 +9,19 @@ on:
       - main
       - master
       - 'claude/**'
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release'
+        required: false
+        type: boolean
+        default: false
+      release_tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: false
+        type: string
 
 jobs:
   build-pebble:
@@ -70,3 +82,17 @@ jobs:
           path: pebble-app/build/*.pbw
           if-no-files-found: error
           retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          name: Release ${{ github.event.inputs.release_tag || github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            pebble-app/build/*.pbw
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
