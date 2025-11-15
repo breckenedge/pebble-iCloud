@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {},
   "pebble": {
-    "sdkVersion": "4.6",
+    "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
       "aplite",
