@@ -2,6 +2,12 @@
 
 A multi-user service that enables Pebble smartwatches to access iCloud Reminders. Built using Test-Driven Development (TDD) with comprehensive test coverage.
 
+## 🚀 Quick Start
+
+**Want to install the app?** → See [**INSTALL.md**](./INSTALL.md) for pre-built `.pbw` downloads
+
+Pre-built `.pbw` files are automatically generated for every commit via GitHub Actions!
+
 ## Features
 
 - 🔐 **Multi-user support** with encrypted credential storage
@@ -10,6 +16,7 @@ A multi-user service that enables Pebble smartwatches to access iCloud Reminders
 - 🧪 **31 passing tests** (100% coverage of core functionality)
 - 🗄️ **SQLite database** for encrypted user credentials
 - 🔒 **Fernet encryption** for Apple passwords
+- 📱 **Rocky.js Pebble app** (100% JavaScript - no C compiler needed!)
 
 ## Architecture
 
@@ -29,11 +36,12 @@ A multi-user service that enables Pebble smartwatches to access iCloud Reminders
 
 ### Components
 
-1. **Pebble Watch App** (`pebble-app/src/c/main.c`) ✅
-   - C-based native Pebble application
+1. **Pebble Watch App** (`pebble-app/src/rocky/index.js`) ✅
+   - **Rocky.js-based** (pure JavaScript - no C compiler needed!)
    - View reminder lists and reminders
    - Mark reminders as complete
    - Secure credential storage on watch
+   - **Automated builds** via GitHub Actions
 
 2. **PebbleKit JS** (`pebble-app/src/pkjs/index.js`) ✅
    - Runs on companion phone

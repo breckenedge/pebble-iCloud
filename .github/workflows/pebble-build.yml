@@ -1,0 +1,184 @@
+name: Build Pebble App
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'claude/**'
+    paths:
+      - 'pebble-app/**'
+      - '.github/workflows/pebble-build.yml'
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - 'pebble-app/**'
+      - '.github/workflows/pebble-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-pebble-app:
+    name: Build Pebble Rocky.js App
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 2.7
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python2.7 python2.7-dev python-pip-whl
+          sudo ln -sf /usr/bin/python2.7 /usr/bin/python
+
+          # Install pip for Python 2.7
+          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+          sudo python2.7 get-pip.py
+
+          python --version
+          pip --version
+
+      - name: Install Pebble SDK dependencies
+        run: |
+          sudo apt-get install -y \
+            python-setuptools \
+            libffi-dev \
+            libssl-dev \
+            libglib2.0-dev \
+            libsdl1.2debian \
+            libfdt1 \
+            libpixman-1-0
+
+      - name: Install Pebble SDK
+        run: |
+          # Download and extract Pebble SDK
+          mkdir -p ~/pebble-dev
+          cd ~/pebble-dev
+
+          # Use wget to download SDK
+          wget https://developer.rebble.io/s3.amazonaws.com/assets.getpebble.com/pebble-tool/pebble-sdk-4.5-linux64.tar.bz2
+          tar -jxf pebble-sdk-4.5-linux64.tar.bz2
+
+          # Install pebble-tool requirements
+          cd pebble-sdk-4.5-linux64
+          pip install --user -r requirements.txt
+
+          # Add to PATH
+          echo "$HOME/pebble-dev/pebble-sdk-4.5-linux64/bin" >> $GITHUB_PATH
+
+      - name: Verify Pebble SDK installation
+        run: |
+          pebble --version
+          pebble sdk list
+
+      - name: Build Pebble app
+        run: |
+          cd pebble-app
+
+          # Clean any previous builds
+          pebble clean || true
+
+          # Build the app for all target platforms
+          pebble build
+
+      - name: List build output
+        run: |
+          echo "Build directory contents:"
+          ls -lah pebble-app/build/
+          echo ""
+          echo "Looking for .pbw files:"
+          find pebble-app/build -name "*.pbw" -ls
+
+      - name: Get app version
+        id: version
+        run: |
+          VERSION=$(grep -oP '"version":\s*"\K[^"]+' pebble-app/package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "App version: $VERSION"
+
+      - name: Find and rename .pbw file
+        id: find-pbw
+        run: |
+          PBW_FILE=$(find pebble-app/build -name "*.pbw" | head -1)
+          if [ -z "$PBW_FILE" ]; then
+            echo "Error: No .pbw file found!"
+            exit 1
+          fi
+
+          # Get version
+          VERSION=$(grep -oP '"version":\s*"\K[^"]+' pebble-app/package.json)
+
+          # Copy to a well-named file
+          mkdir -p ./artifacts
+          cp "$PBW_FILE" "./artifacts/pebble-icloud-reminders-v${VERSION}.pbw"
+
+          echo "pbw_file=./artifacts/pebble-icloud-reminders-v${VERSION}.pbw" >> $GITHUB_OUTPUT
+          echo "pbw_name=pebble-icloud-reminders-v${VERSION}.pbw" >> $GITHUB_OUTPUT
+          echo "Built: pebble-icloud-reminders-v${VERSION}.pbw"
+
+      - name: Upload .pbw artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pebble-icloud-reminders-v${{ steps.version.outputs.version }}
+          path: ./artifacts/*.pbw
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload build artifacts (full build directory)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pebble-build-output-v${{ steps.version.outputs.version }}
+          path: pebble-app/build/
+          if-no-files-found: error
+          retention-days: 30
+
+  create-release:
+    name: Create Release (on tag)
+    runs-on: ubuntu-latest
+    needs: build-pebble-app
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Download .pbw artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pebble-icloud-reminders-v${{ steps.version.outputs.version }}
+          path: ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./artifacts/*.pbw
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: Release v${{ steps.version.outputs.version }}
+          body: |
+            ## Pebble iCloud Reminders v${{ steps.version.outputs.version }}
+
+            ### Installation
+
+            1. Download the `.pbw` file below
+            2. Open it with the Pebble mobile app, or
+            3. Use `pebble install --phone <IP>` from command line, or
+            4. Install via [Rebble App Store](https://apps.rebble.io/)
+
+            ### What's New
+
+            See the automatically generated release notes below.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
