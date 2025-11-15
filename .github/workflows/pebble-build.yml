@@ -1,0 +1,72 @@
+name: Build Pebble App
+
+on:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - main
+      - master
+      - 'claude/**'
+  workflow_dispatch:
+
+jobs:
+  build-pebble:
+    name: Build Pebble App (SDK 4.6)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libsdl1.2debian \
+            libfdt1 \
+            libpixman-1-0 \
+            gcc-arm-none-eabi \
+            npm \
+            nodejs
+
+      - name: Install pebble-tool
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install pebble-tool
+
+      - name: Install Pebble SDK
+        run: |
+          # Install latest Pebble SDK (Python 3 compatible)
+          pebble sdk install latest
+
+          # Verify installation
+          pebble --version
+
+      - name: Build Pebble App
+        working-directory: ./pebble-app
+        run: |
+          # Build the app
+          echo "yes" | pebble build
+
+          # List the built files
+          ls -lh build/
+
+      - name: Upload Pebble App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pebble-app-${{ github.sha }}
+          path: pebble-app/build/*.pbw
+          if-no-files-found: error
+          retention-days: 30
