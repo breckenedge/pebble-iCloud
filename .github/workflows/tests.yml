@@ -77,7 +77,7 @@ jobs:
     name: Pebble App C Build
     runs-on: ubuntu-latest
     container:
-      image: python:3.9
+      image: ubuntu:22.04
 
     steps:
       - name: Checkout code
@@ -86,8 +86,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
 
-      - name: Install dependencies
-        run: apt-get update && apt-get -qq install -y wget libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get -qq install -y wget python3 python3-pip python3-venv \
+            libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
 
       - name: Download Pebble SDK
         run: |
@@ -95,12 +98,11 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Install virtualenv and create SDK environment
+      - name: Create virtualenv for SDK
         run: |
-          pip install --upgrade pip
-          pip install virtualenv
           cd ~/pebble-dev
-          virtualenv .env
+          python3 -m venv .env
+          .env/bin/pip install --upgrade pip
           .env/bin/pip install sh requests websocket-client coloredlogs
 
       - name: Setup SDK
