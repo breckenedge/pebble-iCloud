@@ -2,6 +2,26 @@
 
 A Pebble smartwatch app that integrates with iCloud Reminders through a Flask backend. View and mark reminders as complete directly from your wrist!
 
+## ⚠️ Recent Update: Migrated to Rocky.js
+
+**Version 2.0.0** - Converted from C to pure JavaScript!
+
+The app has been completely rewritten using **Rocky.js**, Pebble's JavaScript graphics framework. This eliminates the need for the C build SDK which was experiencing reliability issues.
+
+### What Changed
+
+- **Before (v1.x)**: C-based UI with PebbleKit JavaScript for communication
+- **Now (v2.0)**: 100% JavaScript using Rocky.js for UI and PebbleKit JS for backend communication
+- **Legacy C code**: Preserved in `src/c-legacy/` for reference
+
+### Benefits
+
+- ✅ No C compiler required - pure JavaScript build
+- ✅ Easier to develop and modify
+- ✅ Works around broken C build SDK issues
+- ✅ Same functionality and features
+- ✅ Compatible with all Pebble platforms
+
 ## Features
 
 - **Authentication**: Secure login with Apple ID credentials
@@ -15,8 +35,9 @@ A Pebble smartwatch app that integrates with iCloud Reminders through a Flask ba
 
 ### Components
 
-1. **Pebble Watch App (C)**: `src/c/main.c`
-   - User interface and interaction
+1. **Rocky.js Watch App (JavaScript)**: `src/rocky/index.js`
+   - User interface rendering with canvas graphics
+   - UI interaction and button handling
    - Data storage and state management
    - AppMessage communication with phone
 
@@ -36,7 +57,7 @@ A Pebble smartwatch app that integrates with iCloud Reminders through a Flask ba
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
 │   Pebble    │         │   Phone     │         │   Flask     │
 │   Watch     │◄───────►│  (PebbleJS) │◄───────►│   Backend   │
-│    (C)      │ AppMsg  │     (JS)    │  HTTP   │   (Python)  │
+│  (Rocky.js) │ AppMsg  │     (JS)    │  HTTP   │   (Python)  │
 └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
@@ -64,7 +85,7 @@ A Pebble smartwatch app that integrates with iCloud Reminders through a Flask ba
 3. Upload all files maintaining the directory structure:
    - `package.json`
    - `wscript`
-   - `src/c/main.c`
+   - `src/rocky/index.js`
    - `src/pkjs/index.js`
 4. Build and install to your watch
 
@@ -268,10 +289,12 @@ pebble-app/
 ├── package.json           # Pebble app manifest
 ├── wscript               # Build configuration
 ├── src/
-│   ├── c/
-│   │   └── main.c        # Main C application
-│   └── pkjs/
-│       └── index.js      # PebbleKit JavaScript
+│   ├── rocky/
+│   │   └── index.js      # Rocky.js watch app (UI)
+│   ├── pkjs/
+│   │   └── index.js      # PebbleKit JavaScript (phone-side)
+│   └── c-legacy/
+│       └── main.c        # Legacy C implementation (archived)
 └── README.md             # This file
 ```
 
@@ -306,10 +329,10 @@ The app is designed to be extensible. Some ideas:
 
 Key areas to modify:
 
-- **UI**: Update window creation functions in `main.c`
-- **Commands**: Add new CMD_* constants and handlers
-- **Backend Communication**: Modify `index.js` HTTP functions
-- **Data Structures**: Update structs in `main.c`
+- **UI**: Update drawing functions in `src/rocky/index.js`
+- **Commands**: Add new CMD_* constants and handlers in both Rocky.js and PebbleKit JS
+- **Backend Communication**: Modify `src/pkjs/index.js` HTTP functions
+- **Data Structures**: Update JavaScript objects in `src/rocky/index.js`
 
 ## Limitations
 
@@ -354,8 +377,15 @@ For issues or questions:
 
 ## Version History
 
+### v2.0.0 (2025-11-15)
+- **Major Update**: Complete rewrite using Rocky.js
+- Migrated from C to 100% JavaScript
+- Eliminated C build SDK dependency
+- Same features and functionality as v1.0.0
+- Improved code maintainability
+
 ### v1.0.0 (2025-11-14)
-- Initial release
+- Initial release (C-based)
 - View reminder lists and reminders
 - Mark reminders as complete
 - Web-based configuration
