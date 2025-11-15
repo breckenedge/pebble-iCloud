@@ -89,22 +89,26 @@ jobs:
       - name: Install dependencies
         run: apt-get update && apt-get -qq install -y wget libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
 
-      - name: Install Pebble tool
-        run: pip install pebble-tool
+      - name: Download Pebble SDK
+        run: |
+          wget https://rebble-sdk.s3-us-west-2.amazonaws.com/pebble-sdk-4.6-rc2-linux64.tar.bz2
+          tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
+          mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Download SDK Core
+      - name: Install SDK dependencies
+        run: |
+          cd ~/pebble-dev
+          pip install -r requirements.txt
+
+      - name: Setup SDK
         run: |
           mkdir -p ~/.pebble-sdk
           touch ~/.pebble-sdk/NO_TRACKING
-          wget https://github.com/aveao/PebbleArchive/raw/master/SDKCores/sdk-core-4.3.tar.bz2 -O ~/.pebble-sdk/sdk-core-4.3.tar.bz2
-
-      - name: Install SDK
-        run: yes | pebble sdk install ~/.pebble-sdk/sdk-core-4.3.tar.bz2
 
       - name: Build Pebble app
         run: |
           cd pebble-app
-          yes | pebble build
+          yes | ~/pebble-dev/bin/pebble build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
