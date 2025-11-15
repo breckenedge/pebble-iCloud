@@ -366,10 +366,14 @@ Pebble.addEventListener('showConfiguration', function() {
           font-size: 16px;
           box-sizing: border-box;
         }
-        button {
-          width: 100%;
-          padding: 12px;
+        .button-group {
+          display: flex;
+          gap: 10px;
           margin-top: 20px;
+        }
+        button {
+          flex: 1;
+          padding: 12px;
           background: #007AFF;
           color: white;
           border: none;
@@ -381,6 +385,16 @@ Pebble.addEventListener('showConfiguration', function() {
         button:hover {
           background: #0051D5;
         }
+        button:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+        button.secondary {
+          background: #6c757d;
+        }
+        button.secondary:hover {
+          background: #5a6268;
+        }
         .info {
           margin-top: 20px;
           padding: 10px;
@@ -389,25 +403,50 @@ Pebble.addEventListener('showConfiguration', function() {
           font-size: 14px;
           color: #666;
         }
+        .message {
+          margin-top: 15px;
+          padding: 10px;
+          border-radius: 4px;
+          font-size: 14px;
+          display: none;
+        }
+        .message.success {
+          background: #d4edda;
+          color: #155724;
+          border: 1px solid #c3e6cb;
+        }
+        .message.error {
+          background: #f8d7da;
+          color: #721c24;
+          border: 1px solid #f5c6cb;
+        }
+        .required {
+          color: #dc3545;
+        }
       </style>
     </head>
     <body>
       <div class="container">
         <h1>iCloud Reminders Settings</h1>
 
-        <label for="backend_url">Backend Server URL:</label>
-        <input type="text" id="backend_url" placeholder="http://192.168.1.100:5000" />
+        <label for="backend_url">Backend Server URL: <span class="required">*</span></label>
+        <input type="url" id="backend_url" placeholder="http://192.168.1.100:5000" required />
 
-        <label for="username">Username:</label>
-        <input type="text" id="username" placeholder="Your username" />
+        <label for="username">Username: <span class="required">*</span></label>
+        <input type="text" id="username" placeholder="Your username" required />
 
-        <label for="apple_id">Apple ID:</label>
-        <input type="email" id="apple_id" placeholder="your.email@icloud.com" />
+        <label for="apple_id">Apple ID: <span class="required">*</span></label>
+        <input type="email" id="apple_id" placeholder="your.email@icloud.com" required />
 
-        <label for="apple_password">App-Specific Password:</label>
-        <input type="password" id="apple_password" placeholder="App-specific password" />
+        <label for="apple_password">App-Specific Password: <span class="required">*</span></label>
+        <input type="password" id="apple_password" placeholder="App-specific password" required />
 
-        <button onclick="saveSettings()">Save Settings</button>
+        <div id="message" class="message"></div>
+
+        <div class="button-group">
+          <button class="secondary" onclick="cancelSettings()">Cancel</button>
+          <button id="saveBtn" onclick="saveSettings()">Save Settings</button>
+        </div>
 
         <div class="info">
           <strong>Important:</strong>
@@ -428,20 +467,74 @@ Pebble.addEventListener('showConfiguration', function() {
         document.getElementById('apple_id').value = settings.apple_id || '';
         document.getElementById('apple_password').value = settings.apple_password || '';
 
+        function showMessage(message, isError) {
+          var messageDiv = document.getElementById('message');
+          messageDiv.textContent = message;
+          messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+          messageDiv.style.display = 'block';
+        }
+
+        function validateUrl(url) {
+          try {
+            var parsed = new URL(url);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function cancelSettings() {
+          document.location = 'pebblekit://close#';
+        }
+
         function saveSettings() {
+          // Get values
+          var backendUrl = document.getElementById('backend_url').value.trim();
+          var username = document.getElementById('username').value.trim();
+          var appleId = document.getElementById('apple_id').value.trim();
+          var applePassword = document.getElementById('apple_password').value.trim();
+
+          // Validate required fields
+          if (!backendUrl || !username || !appleId || !applePassword) {
+            showMessage('Please fill in all required fields', true);
+            return;
+          }
+
+          // Validate backend URL
+          if (!validateUrl(backendUrl)) {
+            showMessage('Please enter a valid HTTP or HTTPS URL for the backend server', true);
+            return;
+          }
+
+          // Validate Apple ID format
+          if (!appleId.includes('@') || !appleId.includes('.')) {
+            showMessage('Please enter a valid Apple ID (email address)', true);
+            return;
+          }
+
+          // Disable buttons during processing
+          var saveBtn = document.getElementById('saveBtn');
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving...';
+
           var settings = {
-            backend_url: document.getElementById('backend_url').value,
-            username: document.getElementById('username').value,
-            apple_id: document.getElementById('apple_id').value,
-            apple_password: document.getElementById('apple_password').value
+            backend_url: backendUrl,
+            username: username,
+            apple_id: appleId,
+            apple_password: applePassword
           };
 
           // Save to localStorage
           localStorage.setItem('pebble_icloud_settings', JSON.stringify(settings));
 
-          // Send to watch
-          var url = 'pebblekit://close#' + encodeURIComponent(JSON.stringify(settings));
-          document.location = url;
+          // Show success message briefly before closing
+          showMessage('Settings saved! Connecting to iCloud...', false);
+
+          // Send to watch and close after a short delay
+          setTimeout(function() {
+            var url = 'pebblekit://close#' + encodeURIComponent(JSON.stringify(settings));
+            document.location = url;
+          }, 1000);
         }
       </script>
     </body>
@@ -466,22 +559,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
     if (settings.backend_url) {
       BACKEND_URL = settings.backend_url;
       localStorage.setItem('backend_url', BACKEND_URL);
+      console.log('Backend URL updated to: ' + BACKEND_URL);
     }
 
     if (settings.username && settings.apple_id && settings.apple_password) {
-      // Save credentials and auto-login
+      // Save credentials
       localStorage.setItem('pebble_icloud_settings', JSON.stringify(settings));
+      console.log('Credentials saved, initiating login...');
 
-      // Send login command to watch
-      Pebble.sendAppMessage({
-        KEY_CMD: CMD_LOGIN,
-        KEY_USERNAME: settings.username,
-        KEY_APPLE_ID: settings.apple_id,
-        KEY_APPLE_PASSWORD: settings.apple_password
-      });
+      // Directly initiate login (more efficient than round-trip through watch)
+      handleLogin(settings.username, settings.apple_id, settings.apple_password);
     }
   } catch (e) {
     console.log('Failed to parse configuration: ' + e);
+    sendError(CMD_LOGIN, 'Failed to process configuration');
   }
 });
 
@@ -496,4 +587,12 @@ Pebble.addEventListener('ready', function() {
   }
 
   console.log('Backend URL: ' + BACKEND_URL);
+
+  // Auto-login if credentials are saved
+  if (settings.username && settings.apple_id && settings.apple_password) {
+    console.log('Saved credentials found, attempting auto-login...');
+    handleLogin(settings.username, settings.apple_id, settings.apple_password);
+  } else {
+    console.log('No saved credentials found. Please configure the app.');
+  }
 });
