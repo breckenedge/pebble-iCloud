@@ -95,21 +95,15 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Install SDK dependencies
-        run: |
-          pip install --upgrade pip setuptools wheel
-          # Install core dependencies needed for pebble build
-          pip install sh requests websocket-client coloredlogs
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Create mock virtualenv structure
+      - name: Setup SDK with uv
         run: |
           cd ~/pebble-dev
-          mkdir -p .env/bin
-          # Point to system Python
-          ln -s $(which python) .env/bin/python
-          ln -s $(which pip) .env/bin/pip
-          # Mark as activated
-          touch .env/bin/activate
+          # Use uv to create venv and install dependencies
+          ~/.cargo/bin/uv venv .env
+          ~/.cargo/bin/uv pip install --python .env/bin/python sh requests websocket-client coloredlogs
 
       - name: Setup SDK
         run: |
