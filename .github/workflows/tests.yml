@@ -91,6 +91,7 @@ jobs:
           apt-get update
           apt-get -qq install -y wget python3 python3-pip python3-venv \
             libsdl1.2debian libfdt1 libpixman-1-0 libfreetype6 libx11-6
+          ln -s /usr/bin/python3 /usr/bin/python
 
       - name: Download Pebble SDK
         run: |
