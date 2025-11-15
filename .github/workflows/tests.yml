@@ -95,15 +95,16 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Setup SDK with uv
+      - name: Install and setup SDK with uv
         run: |
+          # Install uv
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          # Add to PATH for this step
+          export PATH="$HOME/.cargo/bin:$PATH"
+          # Create venv and install dependencies
           cd ~/pebble-dev
-          # Use uv to create venv and install dependencies
-          ~/.cargo/bin/uv venv .env
-          ~/.cargo/bin/uv pip install --python .env/bin/python sh requests websocket-client coloredlogs
+          uv venv .env
+          uv pip install --python .env/bin/python sh requests websocket-client coloredlogs
 
       - name: Setup SDK
         run: |
