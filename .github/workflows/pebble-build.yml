@@ -48,8 +48,8 @@ jobs:
 
       - name: Install Pebble SDK
         run: |
-          # Install the Pebble SDK (will install latest, which should be 4.6+)
-          pebble sdk install
+          # Install Pebble SDK 4.6
+          pebble sdk install 4.6-rc2
 
           # Verify installation
           pebble --version
