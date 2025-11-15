@@ -28,10 +28,14 @@ var CMD_COMPLETE_REMINDER = 4;
 var STATUS_SUCCESS = 1;
 var STATUS_ERROR = 0;
 
-// Configuration
-var BACKEND_URL = localStorage.getItem('backend_url') || 'http://localhost:5000';
+// Configuration - Fixed backend URL for production multi-tenant service
+// TODO: Update this URL when deploying to production
+var BACKEND_URL = 'https://pebble-icloud-api.up.railway.app'; // Production URL
+// For local development, uncomment the line below:
+// var BACKEND_URL = 'http://localhost:5000';
 
 console.log('PebbleKit JS started');
+console.log('Backend URL: ' + BACKEND_URL);
 
 // Helper function to send error to watch
 function sendError(cmd, error) {
@@ -395,9 +399,6 @@ Pebble.addEventListener('showConfiguration', function() {
       <div class="container">
         <h1>iCloud Reminders Settings</h1>
 
-        <label for="backend_url">Backend Server URL:</label>
-        <input type="text" id="backend_url" placeholder="http://192.168.1.100:5000" />
-
         <label for="username">Username:</label>
         <input type="text" id="username" placeholder="Your username" />
 
@@ -414,8 +415,8 @@ Pebble.addEventListener('showConfiguration', function() {
           <ul style="margin: 10px 0; padding-left: 20px;">
             <li>Use an app-specific password, not your regular Apple ID password</li>
             <li>Generate one at: <a href="https://appleid.apple.com" target="_blank">appleid.apple.com</a></li>
-            <li>The backend server must be accessible from your phone</li>
-            <li>If running locally, use your computer's IP address</li>
+            <li>Your data is encrypted and stored securely on our servers</li>
+            <li>We never store your regular Apple password, only app-specific passwords</li>
           </ul>
         </div>
       </div>
@@ -423,14 +424,12 @@ Pebble.addEventListener('showConfiguration', function() {
       <script>
         // Load existing settings
         var settings = JSON.parse(localStorage.getItem('pebble_icloud_settings') || '{}');
-        document.getElementById('backend_url').value = settings.backend_url || 'http://localhost:5000';
         document.getElementById('username').value = settings.username || '';
         document.getElementById('apple_id').value = settings.apple_id || '';
         document.getElementById('apple_password').value = settings.apple_password || '';
 
         function saveSettings() {
           var settings = {
-            backend_url: document.getElementById('backend_url').value,
             username: document.getElementById('username').value,
             apple_id: document.getElementById('apple_id').value,
             apple_password: document.getElementById('apple_password').value
@@ -460,13 +459,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   try {
     var settings = JSON.parse(decodeURIComponent(e.response));
-    console.log('Configuration received: ' + JSON.stringify(settings));
-
-    // Save settings
-    if (settings.backend_url) {
-      BACKEND_URL = settings.backend_url;
-      localStorage.setItem('backend_url', BACKEND_URL);
-    }
+    console.log('Configuration received');
 
     if (settings.username && settings.apple_id && settings.apple_password) {
       // Save credentials and auto-login
@@ -488,12 +481,5 @@ Pebble.addEventListener('webviewclosed', function(e) {
 // Ready event
 Pebble.addEventListener('ready', function() {
   console.log('PebbleKit JS ready!');
-
-  // Load saved settings
-  var settings = JSON.parse(localStorage.getItem('pebble_icloud_settings') || '{}');
-  if (settings.backend_url) {
-    BACKEND_URL = settings.backend_url;
-  }
-
-  console.log('Backend URL: ' + BACKEND_URL);
+  console.log('Using backend: ' + BACKEND_URL);
 });

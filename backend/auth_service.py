@@ -21,15 +21,28 @@ app = Flask(__name__)
 app.config['DATABASE'] = os.environ.get('DATABASE_PATH', 'users.db')
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev_secret_key_change_in_production')
 
-# Generate or load encryption key for passwords
+# Get encryption key from environment variable (production) or file (development)
+FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
 ENCRYPTION_KEY_FILE = '.encryption_key'
-if os.path.exists(ENCRYPTION_KEY_FILE):
-    with open(ENCRYPTION_KEY_FILE, 'rb') as f:
-        ENCRYPTION_KEY = f.read()
+
+if FLASK_ENV == 'production':
+    # Production: Must use environment variable
+    ENCRYPTION_KEY_STR = os.environ.get('ENCRYPTION_KEY')
+    if not ENCRYPTION_KEY_STR:
+        raise ValueError("ENCRYPTION_KEY environment variable must be set in production")
+    ENCRYPTION_KEY = ENCRYPTION_KEY_STR.encode()
+    logger.info("Using encryption key from environment variable")
 else:
-    ENCRYPTION_KEY = Fernet.generate_key()
-    with open(ENCRYPTION_KEY_FILE, 'wb') as f:
-        f.write(ENCRYPTION_KEY)
+    # Development: Use file-based key for convenience
+    if os.path.exists(ENCRYPTION_KEY_FILE):
+        with open(ENCRYPTION_KEY_FILE, 'rb') as f:
+            ENCRYPTION_KEY = f.read()
+        logger.info("Using encryption key from file")
+    else:
+        ENCRYPTION_KEY = Fernet.generate_key()
+        with open(ENCRYPTION_KEY_FILE, 'wb') as f:
+            f.write(ENCRYPTION_KEY)
+        logger.info("Generated new encryption key and saved to file")
 
 fernet = Fernet(ENCRYPTION_KEY)
 
