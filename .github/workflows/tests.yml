@@ -101,11 +101,15 @@ jobs:
           # Install core dependencies needed for pebble build
           pip install sh requests websocket-client coloredlogs
 
-      - name: Create SDK virtualenv symlink
+      - name: Create mock virtualenv structure
         run: |
           cd ~/pebble-dev
-          # Create .env as a symlink to system Python to satisfy SDK check
-          ln -s /usr/local .env
+          mkdir -p .env/bin
+          # Point to system Python
+          ln -s $(which python) .env/bin/python
+          ln -s $(which pip) .env/bin/pip
+          # Mark as activated
+          touch .env/bin/activate
 
       - name: Setup SDK
         run: |
