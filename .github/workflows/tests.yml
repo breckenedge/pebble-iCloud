@@ -95,10 +95,13 @@ jobs:
           tar xf pebble-sdk-4.6-rc2-linux64.tar.bz2
           mv pebble-sdk-4.6-rc2-linux64 ~/pebble-dev
 
-      - name: Install SDK dependencies
+      - name: Install virtualenv and create SDK environment
         run: |
           pip install --upgrade pip
-          pip install sh requests websocket-client coloredlogs
+          pip install virtualenv
+          cd ~/pebble-dev
+          virtualenv .env
+          .env/bin/pip install sh requests websocket-client coloredlogs
 
       - name: Setup SDK
         run: |
