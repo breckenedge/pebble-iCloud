@@ -48,8 +48,8 @@ jobs:
 
       - name: Install Pebble SDK
         run: |
-          # Install Pebble SDK 4.6
-          pebble sdk install 4.6-rc2
+          # Install latest Pebble SDK (patched SDK 4.3 for Python 3)
+          pebble sdk install latest
 
           # Verify installation
           pebble --version
