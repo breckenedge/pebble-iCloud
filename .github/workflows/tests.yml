@@ -99,8 +99,8 @@ jobs:
         run: |
           # Install uv
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          # Add to PATH for this step
-          export PATH="$HOME/.cargo/bin:$PATH"
+          # Add to PATH for this step (uv installs to ~/.local/bin)
+          export PATH="$HOME/.local/bin:$PATH"
           # Create venv and install dependencies
           cd ~/pebble-dev
           uv venv .env
