@@ -89,9 +89,10 @@ jobs:
       - name: Fix Debian Buster repositories
         run: |
           sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
-          sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list
+          sed -i '/security.debian.org/d' /etc/apt/sources.list
           sed -i '/stretch-updates/d' /etc/apt/sources.list
           sed -i '/buster-updates/d' /etc/apt/sources.list
+          echo "deb http://archive.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list
 
       - name: Install dependencies
         run: apt-get update && apt-get -qq install -y wget python-pip python2.7-dev libsdl1.2debian libfdt1 libpixman-1-0 nodejs npm libfreetype6 libx11-6 rlwrap
