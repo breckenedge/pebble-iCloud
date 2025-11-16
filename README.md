@@ -212,6 +212,23 @@ python -m pytest test_auth.py -v
 
 ## API Documentation
 
+### Health Check
+
+#### Health Check
+```http
+GET /health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-11-16T12:00:00.000000",
+  "environment": "production",
+  "version": "2.0.0"
+}
+```
+
 ### Authentication Endpoints
 
 #### Register User
