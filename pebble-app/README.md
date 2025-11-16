@@ -322,15 +322,18 @@ Key areas to modify:
 
 ## Backend API Reference
 
-See `../backend/README.md` for full API documentation.
+See `../README.md` for full API documentation.
 
 Quick reference:
 
 ```
-POST /api/auth/login          # Login/register user
-GET  /api/reminders/lists     # Get all lists (requires auth)
-GET  /api/reminders/list/:id  # Get reminders in list (requires auth)
-POST /api/reminders/:id/complete  # Mark complete (requires auth)
+GET  /health                          # Health check endpoint
+POST /api/auth/register               # Register new user
+POST /api/auth/login                  # Login user
+GET  /api/reminders/lists             # Get all lists (requires auth)
+GET  /api/reminders/list/:id          # Get reminders in list (requires auth)
+POST /api/reminders                   # Create new reminder (requires auth)
+POST /api/reminders/:id/complete      # Mark complete (requires auth)
 ```
 
 ## License
