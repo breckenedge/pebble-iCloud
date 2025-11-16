@@ -37,6 +37,10 @@ app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev_secret_key_chan
 # Setup teardown handlers
 app.teardown_appcontext(close_db)
 
+# Initialize database when module is loaded (for gunicorn)
+with app.app_context():
+    init_db()
+
 
 # Auth endpoints
 @app.route('/api/auth/register', methods=['POST'])
