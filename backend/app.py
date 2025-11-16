@@ -69,6 +69,10 @@ limiter = Limiter(
 # Setup teardown handlers
 app.teardown_appcontext(close_db)
 
+# Initialize database when module is loaded (for gunicorn)
+with app.app_context():
+    init_db()
+
 
 # Input validation helpers
 def validate_email(email):
