@@ -22,14 +22,24 @@ app.config['DATABASE'] = os.environ.get('DATABASE_PATH', 'users.db')
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev_secret_key_change_in_production')
 
 # Generate or load encryption key for passwords
-ENCRYPTION_KEY_FILE = '.encryption_key'
-if os.path.exists(ENCRYPTION_KEY_FILE):
-    with open(ENCRYPTION_KEY_FILE, 'rb') as f:
-        ENCRYPTION_KEY = f.read()
+# Check environment variable first (for production/Railway)
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
+if ENCRYPTION_KEY:
+    # Environment variable exists, use it (must be base64 encoded)
+    ENCRYPTION_KEY = ENCRYPTION_KEY.encode()
 else:
-    ENCRYPTION_KEY = Fernet.generate_key()
-    with open(ENCRYPTION_KEY_FILE, 'wb') as f:
-        f.write(ENCRYPTION_KEY)
+    # Fall back to file-based key for local development
+    ENCRYPTION_KEY_FILE = '.encryption_key'
+    if os.path.exists(ENCRYPTION_KEY_FILE):
+        with open(ENCRYPTION_KEY_FILE, 'rb') as f:
+            ENCRYPTION_KEY = f.read()
+    else:
+        ENCRYPTION_KEY = Fernet.generate_key()
+        try:
+            with open(ENCRYPTION_KEY_FILE, 'wb') as f:
+                f.write(ENCRYPTION_KEY)
+        except (IOError, PermissionError) as e:
+            logger.warning(f"Could not write encryption key file: {e}. Using in-memory key.")
 
 fernet = Fernet(ENCRYPTION_KEY)
 
