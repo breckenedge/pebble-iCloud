@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
 Multi-user iCloud Reminders Service for Pebble Watch Integration
-Combines authentication and iCloud Reminders API
+Production-ready multi-tenant deployment
 Following TDD approach
 """
 
 import os
 import logging
+import re
 from flask import Flask, jsonify, g, request
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 from pyicloud import PyiCloudService
 
@@ -24,15 +27,44 @@ from auth_service import (
 )
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
+# Validate required environment variables in production
+FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+if FLASK_ENV == 'production':
+    required_vars = ['JWT_SECRET_KEY', 'ENCRYPTION_KEY']
+    missing_vars = [var for var in required_vars if not os.environ.get(var)]
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    logger.info("Production mode: All required environment variables present")
+
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=['https://*', 'http://localhost:*'] if FLASK_ENV == 'production' else '*')
 
 # Configuration
 app.config['DATABASE'] = os.environ.get('DATABASE_PATH', 'users.db')
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev_secret_key_change_in_production')
+app.config['PROPAGATE_EXCEPTIONS'] = True
+
+# Production settings
+if FLASK_ENV == 'production':
+    app.config['DEBUG'] = False
+    app.config['TESTING'] = False
+    logger.info("Running in PRODUCTION mode")
+else:
+    logger.warning("Running in DEVELOPMENT mode")
+
+# Rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # Setup teardown handlers
 app.teardown_appcontext(close_db)
@@ -42,59 +74,103 @@ with app.app_context():
     init_db()
 
 
+# Input validation helpers
+def validate_email(email):
+    """Validate email format for Apple ID"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+
+def validate_username(username):
+    """Validate username (alphanumeric, underscore, hyphen, 3-30 chars)"""
+    pattern = r'^[a-zA-Z0-9_-]{3,30}$'
+    return re.match(pattern, username) is not None
+
+
 # Auth endpoints
 @app.route('/api/auth/register', methods=['POST'])
+@limiter.limit("10 per hour")
 def register():
     """Register a new user"""
-    data = request.json
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "Request body must be JSON"}), 400
 
-    username = data.get('username')
-    apple_id = data.get('apple_id')
-    apple_password = data.get('apple_password')
+        username = data.get('username')
+        apple_id = data.get('apple_id')
+        apple_password = data.get('apple_password')
 
-    if not username or not apple_id or not apple_password:
-        return jsonify({"error": "username, apple_id, and apple_password are required"}), 400
+        if not username or not apple_id or not apple_password:
+            return jsonify({"error": "username, apple_id, and apple_password are required"}), 400
 
-    user_id, error = create_user(username, apple_id, apple_password)
+        # Validate username format
+        if not validate_username(username):
+            return jsonify({"error": "Username must be 3-30 characters (alphanumeric, underscore, hyphen only)"}), 400
 
-    if error:
-        return jsonify({"error": error}), 400
+        # Validate Apple ID is email format
+        if not validate_email(apple_id):
+            return jsonify({"error": "Apple ID must be a valid email address"}), 400
 
-    # Generate token
-    token = generate_token(user_id)
+        # Validate password length
+        if len(apple_password) < 8:
+            return jsonify({"error": "Password must be at least 8 characters"}), 400
 
-    return jsonify({
-        "success": True,
-        "token": token,
-        "user_id": user_id
-    }), 201
+        user_id, error = create_user(username, apple_id, apple_password)
+
+        if error:
+            return jsonify({"error": error}), 400
+
+        # Generate token
+        token = generate_token(user_id)
+        logger.info(f"New user registered: {username}")
+
+        return jsonify({
+            "success": True,
+            "token": token,
+            "user_id": user_id
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route('/api/auth/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
-    """Login user"""
-    data = request.json
+    """Login user (rate limited to prevent brute force)"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "Request body must be JSON"}), 400
 
-    username = data.get('username')
-    apple_id = data.get('apple_id')
-    apple_password = data.get('apple_password')
+        username = data.get('username')
+        apple_id = data.get('apple_id')
+        apple_password = data.get('apple_password')
 
-    if not username or not apple_id or not apple_password:
-        return jsonify({"error": "username, apple_id, and apple_password are required"}), 400
+        if not username or not apple_id or not apple_password:
+            return jsonify({"error": "username, apple_id, and apple_password are required"}), 400
 
-    user = authenticate_user(username, apple_id, apple_password)
+        user = authenticate_user(username, apple_id, apple_password)
 
-    if not user:
-        return jsonify({"error": "Invalid credentials"}), 401
+        if not user:
+            logger.warning(f"Failed login attempt for username: {username}")
+            return jsonify({"error": "Invalid credentials"}), 401
 
-    # Generate token
-    token = generate_token(user['id'])
+        # Generate token
+        token = generate_token(user['id'])
+        logger.info(f"User logged in: {username}")
 
-    return jsonify({
-        "success": True,
-        "token": token,
-        "user_id": user['id']
-    }), 200
+        return jsonify({
+            "success": True,
+            "token": token,
+            "user_id": user['id']
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 def get_icloud_service_for_user(user_id):
@@ -127,7 +203,12 @@ def get_icloud_service_for_user(user_id):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "environment": FLASK_ENV,
+        "version": "2.0.0"
+    })
 
 
 @app.route('/api/reminders/lists', methods=['GET'])
@@ -269,4 +350,10 @@ if __name__ == '__main__':
     with app.app_context():
         init_db()
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    debug_mode = FLASK_ENV != 'production'
+
+    if FLASK_ENV == 'production':
+        logger.warning("Running with built-in Flask server in production is not recommended.")
+        logger.warning("Use a production WSGI server like Gunicorn: gunicorn app:app")
+
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
